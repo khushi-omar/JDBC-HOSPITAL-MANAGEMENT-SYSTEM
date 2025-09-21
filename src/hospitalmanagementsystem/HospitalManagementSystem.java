@@ -1,4 +1,3 @@
-
 package hospitalmanagementsystem;
 
 import java.sql.*;
@@ -20,52 +19,57 @@ public class HospitalManagementSystem {
             Connection connection = DriverManager.getConnection(url, username, password);
             Patient patient = new Patient(connection, scanner);
             Doctor doctor = new Doctor(connection);
+            User user = new User(connection);  // For admin authentication
+
             while(true){
-                System.out.println("HOSPITAL MANAGEMENT SYSTEM ");
+                System.out.println("\nHOSPITAL MANAGEMENT SYSTEM ");
                 System.out.println("1. Add Patient");
                 System.out.println("2. View Patients");
                 System.out.println("3. View Doctors");
                 System.out.println("4. Book Appointment");
                 System.out.println("5. Exit");
-                System.out.println("Enter your choice: ");
+                System.out.println("6. Manage Doctors (Admin Only)");
+                System.out.print("Enter your choice: ");
                 int choice = scanner.nextInt();
 
                 switch(choice){
                     case 1:
-                        // Add Patient
                         patient.addPatient();
-                        System.out.println();
                         break;
                     case 2:
-                        // View Patient
                         patient.viewPatients();
-                        System.out.println();
                         break;
                     case 3:
-                        // View Doctors
                         doctor.viewDoctors();
-                        System.out.println();
                         break;
                     case 4:
-                        // Book Appointment
                         bookAppointment(patient, doctor, connection, scanner);
-                        System.out.println();
                         break;
                     case 5:
                         System.out.println("THANK YOU! FOR USING HOSPITAL MANAGEMENT SYSTEM!!");
                         return;
+                    case 6:
+                        System.out.print("Enter admin username: ");
+                        String adminUser = scanner.next();
+                        System.out.print("Enter admin password: ");
+                        String adminPass = scanner.next();
+
+                        if (user.authenticateAdmin(adminUser, adminPass)) {
+                            manageDoctors(doctor, scanner);
+                        } else {
+                            System.out.println("Access denied! Only admins can manage doctors.");
+                        }
+                        break;
                     default:
                         System.out.println("Enter valid choice!!!");
                         break;
                 }
-
             }
 
         }catch (SQLException e){
             e.printStackTrace();
         }
     }
-
 
     public static void bookAppointment(Patient patient, Doctor doctor, Connection connection, Scanner scanner){
         System.out.print("Enter Patient Id: ");
@@ -108,15 +112,40 @@ public class HospitalManagementSystem {
             ResultSet resultSet = preparedStatement.executeQuery();
             if(resultSet.next()){
                 int count = resultSet.getInt(1);
-                if(count==0){
-                    return true;
-                }else{
-                    return false;
-                }
+                return count == 0;
             }
         } catch (SQLException e){
             e.printStackTrace();
         }
         return false;
+    }
+
+    // Admin menu
+    public static void manageDoctors(Doctor doctor, Scanner scanner) {
+        while (true) {
+            System.out.println("\nADMIN - MANAGE DOCTORS");
+            System.out.println("1. Add Doctor");
+            System.out.println("2. Remove Doctor");
+            System.out.println("3. View Doctors");
+            System.out.println("4. Back to Main Menu");
+            System.out.print("Enter choice: ");
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    doctor.addDoctor(scanner);
+                    break;
+                case 2:
+                    doctor.removeDoctor(scanner);
+                    break;
+                case 3:
+                    doctor.viewDoctors();
+                    break;
+                case 4:
+                    return;
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
     }
 }
